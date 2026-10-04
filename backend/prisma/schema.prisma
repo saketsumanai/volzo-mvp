@@ -1,0 +1,340 @@
+// Volzo Mobility Database Schema - SQLite Version (Self-Contained)
+// Optimized for local development without external dependencies
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ============================================
+// USER MODELS
+// ============================================
+
+model User {
+  id            String      @id @default(uuid())
+  phoneNumber   String      @unique
+  name          String?
+  email         String?     @unique
+  profileImage  String?
+  role          String      @default("RIDER") // RIDER, DRIVER, ADMIN
+  status        String      @default("ACTIVE") // ACTIVE, SUSPENDED, DELETED
+  
+  // Firebase
+  firebaseUid   String?     @unique
+  fcmToken      String?
+  
+  // Metadata
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  lastLoginAt   DateTime?
+  
+  // Relations
+  rides         Ride[]      @relation("RiderRides")
+  driver        Driver?
+  notifications Notification[]
+  reviews       Review[]    @relation("RiderReviews")
+  receivedReviews Review[]  @relation("DriverReviews")
+  supportTickets SupportTicket[]
+
+  @@map("users")
+}
+
+model Driver {
+  id                String        @id @default(uuid())
+  userId            String        @unique
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // KYC Details
+  licenseNumber     String?       @unique
+  licenseImage      String?
+  aadharNumber      String?       @unique
+  aadharImage       String?
+  panNumber         String?       @unique
+  panImage          String?
+  kycStatus         String        @default("PENDING") // PENDING, APPROVED, REJECTED
+  kycRejectionReason String?
+  
+  // KYC API Verification
+  aadhaarVerified   Boolean       @default(false)
+  aadhaarVerifiedAt DateTime?
+  panVerified       Boolean       @default(false)
+  panVerifiedAt     DateTime?
+  dlVerified        Boolean       @default(false)
+  dlVerifiedAt      DateTime?
+  kycApiResponse    String?       // Raw JSON from KYC API
+  
+  // Driver Status
+  status            String        @default("OFFLINE") // OFFLINE, ONLINE, ON_RIDE
+  isAvailable       Boolean       @default(false)
+  currentLocation   String?       // Stored as JSON string
+  
+  // Earnings
+  totalEarnings     Float         @default(0)
+  pendingEarnings   Float         @default(0)
+  
+  // Stats
+  totalRides        Int           @default(0)
+  rating            Float         @default(0)
+  totalReviews      Int           @default(0)
+  
+  // Metadata
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  approvedAt        DateTime?
+  
+  // Relations
+  vehicles          Vehicle[]
+  rides             Ride[]
+  
+  @@map("drivers")
+}
+
+model Vehicle {
+  id                String        @id @default(uuid())
+  driverId          String
+  driver            Driver        @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  
+  // Vehicle Details
+  vehicleType       String        // EV_2W, EV_2W_PRO
+  registrationNumber String       @unique
+  model             String
+  color             String?
+  year              Int?
+  
+  // Vehicle Documents
+  rcImage           String?
+  insuranceImage    String?
+  pucImage          String?
+  
+  // Shared Ride Config
+  totalSeats        Int?          @default(1)
+  
+  // Status
+  isActive          Boolean       @default(true)
+  isVerified        Boolean       @default(false)
+  
+  // Metadata
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  // Relations
+  rides             Ride[]
+  
+  @@map("vehicles")
+}
+
+// ============================================
+// RIDE MODELS
+// ============================================
+
+model Ride {
+  id                String        @id @default(uuid())
+  rideNumber        String        @unique // Human-readable: VLZ-20240101-0001
+  
+  // Participants
+  riderId           String
+  rider             User          @relation("RiderRides", fields: [riderId], references: [id])
+  driverId          String?
+  driver            Driver?       @relation(fields: [driverId], references: [id])
+  vehicleId         String?
+  vehicle           Vehicle?      @relation(fields: [vehicleId], references: [id])
+  
+  // Ride Details
+  rideType          String        // SCOOTER, SCOOTER_PRO
+  status            String        @default("REQUESTED") // REQUESTED, ACCEPTED, etc.
+  
+  // Locations
+  pickupLocation    String
+  dropoffLocation   String
+  actualRoute       String?
+  
+  // Shared Ride Details
+  seatsBooked       Int           @default(1)
+  sharedBookings    SharedBooking[]
+  
+  // Pricing
+  estimatedFare     Float
+  finalFare         Float?
+  distance          Float?
+  duration          Int?          // in minutes
+  
+  // Timestamps
+  requestedAt       DateTime      @default(now())
+  acceptedAt        DateTime?
+  driverArrivedAt   DateTime?
+  startedAt         DateTime?
+  completedAt       DateTime?
+  cancelledAt       DateTime?
+  
+  // Cancellation
+  cancelledBy       String?       // userId
+  cancellationReason String?
+  
+  // Payment
+  payment           Payment?
+  
+  // Metadata
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  // Relations
+  review            Review?
+  
+  @@map("rides")
+}
+
+model SharedBooking {
+  id                String        @id @default(uuid())
+  rideId            String
+  ride              Ride          @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  
+  riderId           String
+  seatsBooked       Int           @default(1)
+  fare              Float
+  
+  pickupLocation    String
+  dropoffLocation   String
+  
+  status            String        @default("REQUESTED")
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  @@map("shared_bookings")
+}
+
+// ============================================
+// PAYMENT MODELS
+// ============================================
+
+model Payment {
+  id                String        @id @default(uuid())
+  rideId            String        @unique
+  ride              Ride          @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  
+  // Payment Details
+  amount            Float
+  method            String        @default("QR_UPI") // QR_UPI, RAZORPAY, CASH, WALLET
+  status            String        @default("PENDING") // PENDING, RIDER_CONFIRMED, DRIVER_VERIFIED, PAID, FAILED, REFUNDED
+  
+  // Razorpay Gateway Details
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+
+  // QR Payment Details
+  upiTransactionId  String?
+  upiId             String?
+  paymentScreenshot String?
+  riderNote         String?
+  
+  // Verification
+  riderConfirmedAt  DateTime?
+  driverVerifiedAt  DateTime?
+  verifiedBy        String?       // driverId
+  
+  // Refund
+  refundId          String?       // Razorpay refund ID
+  refundStatus      String?       // initiated, processed, failed
+  refundedAt        DateTime?
+  refundAmount      Float?
+  
+  // Fraud Detection
+  isFlagged         Boolean       @default(false)
+  flagReason        String?
+  
+  // Metadata
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  
+  @@map("payments")
+}
+
+// ============================================
+// REVIEW & RATING
+// ============================================
+
+model Review {
+  id                String        @id @default(uuid())
+  rideId            String        @unique
+  ride              Ride          @relation(fields: [rideId], references: [id], onDelete: Cascade)
+  
+  riderId           String
+  rider             User          @relation("RiderReviews", fields: [riderId], references: [id])
+  
+  driverId          String
+  driver            User          @relation("DriverReviews", fields: [driverId], references: [id])
+  
+  rating            Int           // 1-5
+  comment           String?
+  
+  createdAt         DateTime      @default(now())
+  
+  @@map("reviews")
+}
+
+// ============================================
+// NOTIFICATION SYSTEM
+// ============================================
+
+model Notification {
+  id                String        @id @default(uuid())
+  userId            String
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title             String
+  body              String
+  data              String?
+  
+  isRead            Boolean       @default(false)
+  isSent            Boolean       @default(false)
+  
+  createdAt         DateTime      @default(now())
+  readAt            DateTime?
+  
+  @@map("notifications")
+}
+
+// ============================================
+// SUPPORT SYSTEM
+// ============================================
+
+model SupportTicket {
+  id                String        @id @default(uuid())
+  ticketNumber      String        @unique
+  
+  userId            String
+  user              User          @relation(fields: [userId], references: [id])
+  
+  subject           String
+  description       String
+  status            String        @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  priority          String        @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  
+  rideId            String?
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  resolvedAt        DateTime?
+  
+  @@map("support_tickets")
+}
+
+// ============================================
+// SYSTEM CONFIGURATION
+// ============================================
+
+model SystemConfig {
+  id                String        @id @default(uuid())
+  key               String        @unique
+  value             String
+  description       String?
+  
+  updatedAt         DateTime      @updatedAt
+  
+  @@map("system_config")
+}

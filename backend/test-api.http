@@ -1,0 +1,253 @@
+# Volzo Mobility API Tests
+# Use with REST Client extension in VS Code or any HTTP client
+
+@baseUrl = http://localhost:3000/api/v1
+@token = YOUR_JWT_TOKEN_HERE
+
+### Health Check
+GET http://localhost:3000/health
+
+### ============================================
+### AUTHENTICATION
+### ============================================
+
+### Login/Register
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "idToken": "firebase_token_here",
+  "phoneNumber": "+919876543210",
+  "name": "Test User",
+  "fcmToken": "test_fcm_token"
+}
+
+### Get Current User
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{token}}
+
+### Refresh Token
+POST {{baseUrl}}/auth/refresh
+Authorization: Bearer {{token}}
+
+### ============================================
+### RIDES
+### ============================================
+
+### Calculate Fare
+POST {{baseUrl}}/rides/calculate-fare
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "rideType": "SCOOTER",
+  "distance": 10.5,
+  "seatsBooked": 1
+}
+
+### Request Ride
+POST {{baseUrl}}/rides
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "rideType": "SCOOTER",
+  "pickupLocation": {
+    "lat": 28.6139,
+    "lng": 77.2090,
+    "address": "Connaught Place, New Delhi"
+  },
+  "dropoffLocation": {
+    "lat": 28.5355,
+    "lng": 77.3910,
+    "address": "Noida Sector 18"
+  },
+  "estimatedDistance": 15.5
+}
+
+### Get Active Ride
+GET {{baseUrl}}/rides/active
+Authorization: Bearer {{token}}
+
+### Get Ride History
+GET {{baseUrl}}/rides/history?page=1&limit=20
+Authorization: Bearer {{token}}
+
+### Get Ride Details
+GET {{baseUrl}}/rides/RIDE_ID_HERE
+Authorization: Bearer {{token}}
+
+### Cancel Ride
+PATCH {{baseUrl}}/rides/RIDE_ID_HERE/cancel
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "reason": "Changed my mind"
+}
+
+### ============================================
+### DRIVER (Driver Token Required)
+### ============================================
+
+### Register as Driver
+POST {{baseUrl}}/drivers/register
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "licenseNumber": "DL1234567890",
+  "aadharNumber": "123456789012",
+  "panNumber": "ABCDE1234F"
+}
+
+### Add Vehicle
+POST {{baseUrl}}/drivers/vehicles
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "vehicleType": "EV_SCOOTER",
+  "registrationNumber": "DL01AB1234",
+  "model": "Ather 450X",
+  "color": "Blue",
+  "year": 2023
+}
+
+### Update Driver Status
+PATCH {{baseUrl}}/drivers/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "status": "ONLINE",
+  "isAvailable": true
+}
+
+### Update Location
+PATCH {{baseUrl}}/drivers/location
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "lat": 28.6139,
+  "lng": 77.2090,
+  "heading": 45.5
+}
+
+### Accept Ride
+POST {{baseUrl}}/rides/RIDE_ID_HERE/accept
+Authorization: Bearer {{token}}
+
+### Driver Arrived
+POST {{baseUrl}}/rides/RIDE_ID_HERE/arrive
+Authorization: Bearer {{token}}
+
+### Start Ride
+POST {{baseUrl}}/rides/RIDE_ID_HERE/start
+Authorization: Bearer {{token}}
+
+### Complete Ride
+POST {{baseUrl}}/rides/RIDE_ID_HERE/complete
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "finalDistance": 16.2,
+  "actualRoute": []
+}
+
+### Get Earnings
+GET {{baseUrl}}/drivers/earnings?period=today
+Authorization: Bearer {{token}}
+
+### ============================================
+### PAYMENTS
+### ============================================
+
+### Initiate Payment
+POST {{baseUrl}}/payments/initiate
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "rideId": "RIDE_ID_HERE"
+}
+
+### Confirm Payment (Rider)
+POST {{baseUrl}}/payments/PAYMENT_ID_HERE/confirm
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "upiTransactionId": "402993715637",
+  "note": "Paid via GPay"
+}
+
+### Verify Payment (Driver)
+POST {{baseUrl}}/payments/PAYMENT_ID_HERE/verify
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "isVerified": true
+}
+
+### Get Payment Details
+GET {{baseUrl}}/payments/PAYMENT_ID_HERE
+Authorization: Bearer {{token}}
+
+### ============================================
+### USER PROFILE
+### ============================================
+
+### Get Profile
+GET {{baseUrl}}/users/profile
+Authorization: Bearer {{token}}
+
+### Update Profile
+PATCH {{baseUrl}}/users/profile
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Updated Name",
+  "email": "user@example.com"
+}
+
+### ============================================
+### ADMIN (Admin Token Required)
+### ============================================
+
+### Dashboard Stats
+GET {{baseUrl}}/admin/dashboard
+Authorization: Bearer {{token}}
+
+### List Users
+GET {{baseUrl}}/admin/users?page=1&limit=20
+Authorization: Bearer {{token}}
+
+### List Drivers
+GET {{baseUrl}}/admin/drivers?page=1&limit=20&kycStatus=PENDING
+Authorization: Bearer {{token}}
+
+### Approve Driver KYC
+PATCH {{baseUrl}}/admin/drivers/DRIVER_ID_HERE/kyc
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "action": "APPROVE"
+}
+
+### List Rides
+GET {{baseUrl}}/admin/rides?page=1&limit=20
+Authorization: Bearer {{token}}
+
+### List Payments
+GET {{baseUrl}}/admin/payments?page=1&limit=20&status=PENDING
+Authorization: Bearer {{token}}
+
+### Get Analytics
+GET {{baseUrl}}/admin/analytics?period=week
+Authorization: Bearer {{token}}

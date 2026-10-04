@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 120" width="100%" height="100%">
+  <!-- Volzo Icon: V with integrated leaf contours -->
+  <g fill="#0066FF">
+    <!-- Left bold V stem -->
+    <path d="M 12 10 L 45 10 L 64 68 L 65 68 C 61 54 53 38 45 32 C 34 24 16 28 12 10 Z" />
+    
+    <!-- Stylized Leaf Stem & Blade growing from bottom of V -->
+    <path d="M 68 110 C 68 110 52 82 52 64 C 52 48 68 34 84 34 C 84 34 88 56 78 78 C 72 90 68 110 68 110 Z" />
+    <path d="M 68 110 C 68 110 78 88 88 82 C 102 74 122 76 122 76 C 122 76 108 94 92 100 C 80 104 68 110 68 110 Z" />
+    
+    <!-- Bold Right Stem of V wrapping around the leaf -->
+    <path d="M 128 10 L 160 10 L 105 110 L 76 110 L 102 60 L 128 10 Z" />
+  </g>
+  
+  <!-- VOLZO Bold Text -->
+  <text x="180" y="90" font-family="'Outfit', 'Inter', sans-serif" font-weight="900" font-size="88" fill="#0066FF" letter-spacing="2">OLZO</text>
+</svg>

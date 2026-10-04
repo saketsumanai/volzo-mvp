@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Volzo Simple Blue & White Theme */
+:root {
+  --volzo-primary: #0040C8;
+  --volzo-primary-hover: #1D4ED8;
+  --volzo-secondary: #2563EB;
+  --volzo-accent: #10B981;
+  --volzo-bg: #F8FAFC;
+  --volzo-card: #FFFFFF;
+  --volzo-border: #E2E8F0;
+  --volzo-text: #0F172A;
+  --volzo-text-muted: #64748B;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--volzo-bg);
+  color: var(--volzo-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* Clean White Card Panel */
+.glass-panel {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+}
+
+.glass-panel-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.glass-panel-hover:hover {
+  transform: translateY(-2px);
+  border-color: #CBD5E1;
+  box-shadow: 0 4px 12px -2px rgba(0, 64, 200, 0.12);
+}
+
+/* Standard Clean Shadow */
+.shadow-neon-blue {
+  box-shadow: 0 4px 14px 0 rgba(0, 64, 200, 0.2);
+}
+
+.shadow-neon-cyan {
+  box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.15);
+}
+
+/* Webkit Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Table Transitions */
+tr {
+  transition: all 0.15s ease-in-out;
+}
