@@ -14,11 +14,14 @@ const userRoutes    = require('./user.routes');
 const adminRoutes   = require('./admin.routes');
 const kycRoutes     = require('./kyc.routes');
 
-// Mount routes
-router.use('/auth',     authRoutes);
+// Import security rate limiters
+const { authLimiter, paymentLimiter } = require('../middleware/rateLimiter');
+
+// Mount routes with dedicated security layers
+router.use('/auth',     authLimiter, authRoutes);
 router.use('/rides',    rideRoutes);
 router.use('/drivers',  driverRoutes);
-router.use('/payments', paymentRoutes);
+router.use('/payments', paymentLimiter, paymentRoutes);
 router.use('/users',    userRoutes);
 router.use('/admin',    adminRoutes);
 router.use('/kyc',      kycRoutes);

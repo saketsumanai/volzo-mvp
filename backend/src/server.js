@@ -15,11 +15,18 @@ const { initializeSocket } = require('./socket');
 const { logger } = require('./utils/logger');
 const { errorHandler } = require('./middleware/errorHandler');
 const { rateLimiter } = require('./middleware/rateLimiter');
+const {
+  sanitizeInputs,
+  preventParameterPollution,
+  preventPathTraversal,
+  securityHeaders
+} = require('./middleware/security');
 const routes = require('./routes');
 const { setupSwagger } = require('./config/swagger');
 
 // Initialize Express app
 const app = express();
+app.disable('x-powered-by'); // Hide express fingerprint
 const server = http.createServer(app);
 
 // Initialize Socket.IO
@@ -27,24 +34,41 @@ const io = initializeSocket(server);
 app.set('io', io);
 
 // ============================================
-// MIDDLEWARE
+// SECURITY & ESSENTIAL MIDDLEWARE
 // ============================================
 
-// Security
-app.use(helmet());
+// Security headers with Helmet
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: false // Allows Swagger UI and mobile embedded WebViews
+}));
+
+// Custom security headers (HSTS, Anti-Clickjacking, No-Sniff)
+app.use(securityHeaders);
+
+// Path traversal and dangerous URI detector
+app.use(preventPathTraversal);
 
 // CORS
 app.use(cors({
   origin: process.env.SOCKET_CORS_ORIGIN?.split(',') || '*',
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 }));
 
 // Compression
 app.use(compression());
 
-// Body parsing
+// Body parsing with strict payload limits
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Input sanitization (XSS and Prototype Pollution defense)
+app.use(sanitizeInputs);
+
+// Parameter pollution protection
+app.use(preventParameterPollution);
 
 // Logging
 if (process.env.NODE_ENV === 'development') {
@@ -53,7 +77,7 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
 }
 
-// Rate limiting
+// Global API Rate limiting
 app.use('/api/', rateLimiter);
 
 // Static files (for uploaded QR codes, etc.)
