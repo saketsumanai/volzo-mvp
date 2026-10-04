@@ -19,8 +19,12 @@ import 'features/auth/presentation/pages/splash_page.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
-  await dotenv.load(fileName: '.env');
+  // Load environment variables with fallback
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    debugPrint('ℹ️ .env file not found or empty, using default configurations');
+  }
 
   // Initialize Firebase with graceful fallback for dev
   try {

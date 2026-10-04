@@ -98,12 +98,15 @@ class _RideRequestPageState extends State<RideRequestPage>
         // Navigate to payment page immediately without an extra fetch.
         _isCompleting = true;
         if (!mounted) return;
-        final rideData = _rideData; // use whatever we already have
+        final currentRide = _rideData;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => FoolproofPaymentPage(
+            builder: (_) => PaymentVerificationPage(
               rideId: widget.rideId,
-              rideData: rideData,
+              rideNumber: (currentRide?['rideNumber'] ?? widget.rideId.substring(0, math.min(8, widget.rideId.length))).toString(),
+              amount: double.tryParse((currentRide?['finalFare'] ?? currentRide?['estimatedFare'] ?? '50').toString()) ?? 50.0,
+              riderName: (currentRide?['rider'] is Map) ? (currentRide!['rider']['name']?.toString() ?? 'Rider') : 'Rider',
+              paymentId: (currentRide?['payment'] is Map) ? currentRide!['payment']['id']?.toString() : null,
             ),
           ),
         );
@@ -134,9 +137,12 @@ class _RideRequestPageState extends State<RideRequestPage>
         if (!mounted) return;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => FoolproofPaymentPage(
+            builder: (_) => PaymentVerificationPage(
               rideId: widget.rideId,
-              rideData: Map<String, dynamic>.from(ride),
+              rideNumber: (ride['rideNumber'] ?? widget.rideId.substring(0, math.min(8, widget.rideId.length))).toString(),
+              amount: double.tryParse((ride['finalFare'] ?? ride['estimatedFare'] ?? '50').toString()) ?? 50.0,
+              riderName: (ride['rider'] is Map) ? (ride['rider']['name']?.toString() ?? 'Rider') : 'Rider',
+              paymentId: (ride['payment'] is Map) ? ride['payment']['id']?.toString() : null,
             ),
           ),
         );
@@ -276,12 +282,15 @@ class _RideRequestPageState extends State<RideRequestPage>
 
       print('✅ Ride completed. Navigating to payment page...');
 
-      // Navigate to FOOLPROOF payment page with ride data
+      // Navigate to payment verification page with ride data
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => FoolproofPaymentPage(
+          builder: (_) => PaymentVerificationPage(
             rideId: widget.rideId,
-            rideData: rideData,
+            rideNumber: (rideData?['rideNumber'] ?? widget.rideId.substring(0, math.min(8, widget.rideId.length))).toString(),
+            amount: double.tryParse((rideData?['finalFare'] ?? rideData?['estimatedFare'] ?? '50').toString()) ?? 50.0,
+            riderName: (rideData?['rider'] is Map) ? (rideData!['rider']['name']?.toString() ?? 'Rider') : 'Rider',
+            paymentId: (rideData?['payment'] is Map) ? rideData!['payment']['id']?.toString() : null,
           ),
         ),
       );

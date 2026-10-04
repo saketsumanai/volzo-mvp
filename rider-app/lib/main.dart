@@ -13,21 +13,24 @@ import 'package:google_fonts/google_fonts.dart';
 import 'core/config/app_config.dart';
 import 'core/config/theme_config.dart';
 import 'core/network/api_client.dart';
-import 'core/network/socket_client.dart';
 import 'features/auth/presentation/pages/splash_page.dart';
 import 'features/home/presentation/pages/profile_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
+  // Load environment variables with fallback
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint('ℹ️ .env file not found or empty, using platform default configurations');
+  }
 
   // Initialize Firebase
   try {
     await Firebase.initializeApp();
   } catch (e) {
-    print('⚠️ Firebase initialization skipped or failed: $e. Running in standalone local development mode.');
+    debugPrint('⚠️ Firebase initialization skipped or failed: $e. Running in standalone local development mode.');
   }
 
   // Initialize API client
